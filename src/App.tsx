@@ -25,7 +25,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900">
+    <div className="app-container">
       <Header
         invoice={invoice}
         onUpdateDetails={updateInvoiceDetails}
@@ -35,10 +35,10 @@ export function App() {
         itemCount={invoice.items.length}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+      <main className="main-content">
         <InvoiceDetailsCard invoice={invoice} onUpdate={updateInvoiceDetails} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid-2">
           <ParticipantsManager
             participants={invoice.participants}
             onAdd={addParticipant}
@@ -60,8 +60,8 @@ export function App() {
         <SummaryView invoice={invoice} result={calculationResult} onExportPDF={handleExportPDF} />
       </main>
 
-      <footer className="bg-white border-t border-gray-200 py-6 text-center text-xs text-gray-500 mt-12">
-        <p>ShareTicket • Aplicación de división de gastos con React, TypeScript y Patrones de Diseño (Strategy & Factory)</p>
+      <footer className="footer">
+        <p>ShareTicket • Aplicación de división de gastos con React, TypeScript y CSS Puro</p>
       </footer>
     </div>
   );
