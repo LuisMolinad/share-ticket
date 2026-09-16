@@ -1,0 +1,259 @@
+.summary-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.summary-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.margin-zero {
+  margin: 0;
+}
+
+.summary-banner {
+  background: linear-gradient(to right, #4f46e5, #7c3aed);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  color: white;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .summary-banner {
+    flex-direction: row;
+    align-items: center;
+    padding: 2rem;
+  }
+}
+
+.summary-badge {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #e0e7ff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.summary-main-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin: 0.5rem 0 0.25rem 0;
+  letter-spacing: -0.025em;
+}
+
+.summary-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(4px);
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  text-align: center;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .summary-stats {
+    grid-template-columns: repeat(4, 1fr);
+    width: auto;
+  }
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #e0e7ff;
+  margin: 0;
+}
+
+.stat-value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.participants-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .participants-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .participants-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.participant-card {
+  background-color: #f9fafb;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.2s;
+}
+
+.participant-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.participant-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.participant-info-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.participant-name-text {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text);
+  margin: 0;
+}
+
+.participant-dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.participant-total-amount {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--primary);
+}
+
+.participant-breakdown {
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.breakdown-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.breakdown-row.discount {
+  color: var(--success);
+}
+
+.summary-subtotal-text {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.summary-discount-text {
+  font-weight: 500;
+}
+
+.summary-tax-text {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.summary-tip-text {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.assigned-items-section {
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
+}
+
+.assigned-items-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 0.5rem 0;
+}
+
+.summary-empty-items {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin: 0;
+}
+
+.assigned-items-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 9rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.assigned-item-row {
+  font-size: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-secondary);
+}
+
+.summary-item-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 70%;
+}
+
+.summary-item-qty-hint {
+  color: #9ca3af;
+}
+
+.summary-item-price {
+  font-weight: 500;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.participant-footer {
+  border-top: 1px solid var(--border);
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
