@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { InvoiceItem, Participant, SplitMode } from '../domain/types';
 import { ShoppingBag, Plus, Trash2, Check, Tag } from 'lucide-react';
+import './ItemsManager.css';
 
 interface ItemsManagerProps {
   items: InvoiceItem[];
@@ -24,10 +25,8 @@ export const ItemsManager: React.FC<ItemsManagerProps> = ({
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [quantity, setQuantity] = useState('1');
-  // Selected participant IDs when creating a new item (defaults to all participants)
   const [selectedParticipantsForNew, setSelectedParticipantsForNew] = useState<string[]>([]);
 
-  // Synchronize default selected participants when participants list changes
   React.useEffect(() => {
     setSelectedParticipantsForNew(participants.map((p) => p.id));
   }, [participants]);
@@ -43,7 +42,6 @@ export const ItemsManager: React.FC<ItemsManagerProps> = ({
     const pVal = parseFloat(price);
     const qVal = parseFloat(quantity);
     if (name.trim() && !isNaN(pVal) && pVal >= 0 && !isNaN(qVal) && qVal > 0) {
-      // In itemized mode, pass the selected participants. If empty, pass empty array (fallback to all)
       const assigned = splitMode === 'itemized' ? selectedParticipantsForNew : [];
       onAddItem(name, pVal, qVal, assigned);
       setName('');
@@ -54,37 +52,35 @@ export const ItemsManager: React.FC<ItemsManagerProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-800 flex items-center space-x-2">
-          <ShoppingBag className="w-5 h-5 text-indigo-600" />
+    <div className="card">
+      <div className="items-header-row">
+        <h2 className="card-title margin-zero">
+          <ShoppingBag />
           <span>Ítems / Consumos ({items.length})</span>
         </h2>
         {splitMode === 'itemized' && (
-          <span className="text-xs bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full font-medium">
-            Modo Ítem por Ítem activo: Selecciona quiénes participan en cada ítem
+          <span className="items-mode-badge">
+            Modo Ítem por Ítem activo
           </span>
         )}
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4 mb-6 bg-gray-50 p-4 rounded-xl border border-gray-200">
-        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-          <div className="sm:col-span-6">
-            <label className="block text-xs font-medium text-gray-700 mb-1">Nombre del ítem</label>
+      <form onSubmit={handleSubmit} className="items-form-box">
+        <div className="items-grid-12">
+          <div className="col-span-12 sm-col-6">
+            <label className="form-label">Nombre del ítem</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ej. Pizza familiar, Botella de vino..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white"
+              placeholder="Ej. Pizza familiar..."
+              className="form-input"
             />
           </div>
-          <div className="sm:col-span-3">
-            <label className="block text-xs font-medium text-gray-700 mb-1">Precio unitario</label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 text-sm">
-                {currency}
-              </span>
+          <div className="col-span-12 sm-col-3">
+            <label className="form-label">Precio unitario</label>
+            <div className="input-with-icon">
+              <span className="input-icon currency-icon-span">{currency}</span>
               <input
                 type="number"
                 step="0.01"
@@ -92,12 +88,12 @@ export const ItemsManager: React.FC<ItemsManagerProps> = ({
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 placeholder="0.00"
-                className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white"
+                className="form-input items-price-input"
               />
             </div>
           </div>
-          <div className="sm:col-span-3">
-            <label className="block text-xs font-medium text-gray-700 mb-1">Cantidad</label>
+          <div className="col-span-12 sm-col-3">
+            <label className="form-label">Cantidad</label>
             <input
               type="number"
               step="0.5"
@@ -105,17 +101,17 @@ export const ItemsManager: React.FC<ItemsManagerProps> = ({
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
               placeholder="1"
-              className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white"
+              className="form-input"
             />
           </div>
         </div>
 
         {splitMode === 'itemized' && participants.length > 0 && (
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5">
-              Personas involucradas en este ítem (por defecto todas):
+            <label className="form-label items-label-block">
+              Personas involucradas en este ítem:
             </label>
-            <div className="flex flex-wrap gap-2">
+            <div className="participants-list">
               {participants.map((p) => {
                 const isSelected = selectedParticipantsForNew.includes(p.id);
                 return (
@@ -123,18 +119,11 @@ export const ItemsManager: React.FC<ItemsManagerProps> = ({
                     type="button"
                     key={p.id}
                     onClick={() => toggleNewParticipant(p.id)}
-                    className={`px-3 py-1 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 ${
-                      isSelected
-                        ? 'bg-indigo-600 text-white shadow-xs'
-                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100'
-                    }`}
+                    className={`assignment-btn ${isSelected ? 'assigned' : ''}`}
                   >
-                    <span
-                      className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: isSelected ? '#fff' : p.color }}
-                    />
+                    <span className="participant-dot" style={{ backgroundColor: isSelected ? '#fff' : p.color, width: '0.5rem', height: '0.5rem' }} />
                     <span>{p.name}</span>
-                    {isSelected && <Check className="w-3 h-3" />}
+                    {isSelected && <Check size={12} />}
                   </button>
                 );
               })}
@@ -142,72 +131,56 @@ export const ItemsManager: React.FC<ItemsManagerProps> = ({
           </div>
         )}
 
-        <button
-          type="submit"
-          className="w-full flex items-center justify-center space-x-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition shadow-sm"
-        >
-          <Plus className="w-4 h-4" />
+        <button type="submit" className="btn btn-primary btn-full">
+          <Plus size={16} />
           <span>Agregar Ítem</span>
         </button>
       </form>
 
       {items.length === 0 ? (
-        <div className="text-center py-8 text-gray-400 text-sm">
+        <div className="empty-state">
           No hay ítems registrados. Añade los platos, bebidas o servicios consumidos.
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="items-list-container">
           {items.map((item) => {
             const itemTotal = item.price * item.quantity;
             return (
-              <div
-                key={item.id}
-                className="flex flex-col md:flex-row md:items-center justify-between bg-gray-50 border border-gray-200 p-4 rounded-xl gap-3"
-              >
-                <div className="flex items-start md:items-center space-x-3">
-                  <div className="bg-indigo-100 text-indigo-700 p-2 rounded-lg mt-0.5 md:mt-0">
-                    <Tag className="w-4 h-4" />
+              <div key={item.id} className="item-card">
+                <div className="item-info">
+                  <div className="item-icon-box">
+                    <Tag size={16} />
                   </div>
                   <div>
-                    <h3 className="font-medium text-gray-900 text-sm">{item.name}</h3>
-                    <p className="text-xs text-gray-500">
+                    <h3 className="item-name">{item.name}</h3>
+                    <p className="item-details">
                       {item.quantity} x {currency}{item.price.toFixed(2)} ={' '}
-                      <strong className="text-gray-800">
+                      <strong className="item-total-strong">
                         {currency}{itemTotal.toFixed(2)}
                       </strong>
                     </p>
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="item-actions-col">
                   {splitMode === 'itemized' && (
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-xs text-gray-500 mr-1">Involucrados:</span>
+                    <div className="item-assignments">
+                      <span className="assignment-label">Involucrados:</span>
                       {participants.length === 0 ? (
-                        <span className="text-xs text-red-500 italic">Agrega participantes primero</span>
+                        <span className="assignment-missing">Agrega participantes</span>
                       ) : (
                         participants.map((p) => {
                           const isExplicitlyAssigned = item.assignedParticipantIds.includes(p.id);
+                          const isDefaultAll = item.assignedParticipantIds.length === 0;
 
                           return (
                             <button
                               key={p.id}
                               onClick={() => onToggleAssignment(item.id, p.id)}
-                              title={
-                                item.assignedParticipantIds.length === 0
-                                  ? 'Actualmente se reparte entre todos. Clic para asignar específicamente.'
-                                  : ''
-                              }
-                              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition flex items-center space-x-1 ${
-                                isExplicitlyAssigned || (item.assignedParticipantIds.length === 0)
-                                  ? 'bg-indigo-600 text-white shadow-xs'
-                                  : 'bg-white border border-gray-300 text-gray-400 hover:bg-gray-100 hover:text-gray-700'
-                              }`}
+                              className={`assignment-btn ${isExplicitlyAssigned || isDefaultAll ? 'assigned' : ''}`}
                             >
                               <span>{p.name}</span>
-                              {(isExplicitlyAssigned || item.assignedParticipantIds.length === 0) && (
-                                <Check className="w-3 h-3" />
-                              )}
+                              {(isExplicitlyAssigned || isDefaultAll) && <Check size={12} />}
                             </button>
                           );
                         })
@@ -217,9 +190,10 @@ export const ItemsManager: React.FC<ItemsManagerProps> = ({
 
                   <button
                     onClick={() => onRemoveItem(item.id)}
-                    className="text-gray-400 hover:text-red-600 transition self-end sm:self-center p-1.5 rounded-lg hover:bg-red-50"
+                    className="btn-danger-light"
+                    title="Eliminar ítem"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 size={16} />
                   </button>
                 </div>
               </div>
