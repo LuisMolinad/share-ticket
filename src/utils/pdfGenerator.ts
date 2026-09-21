@@ -28,9 +28,15 @@ export function generateInvoicePDF(invoice: Invoice, result: CalculationResult) 
 
   const summaryData = [
     ['Subtotal ítems:', `${currency}${result.subtotal.toFixed(2)}`],
-    ['Descuento aplicado:', `-${currency}${result.totalDiscount.toFixed(2)}`],
-    [`Impuestos (${invoice.taxPercentage}%):`, `${currency}${result.totalTax.toFixed(2)}`],
-    [`Propina (${invoice.tipPercentage}%):`, `${currency}${result.totalTip.toFixed(2)}`],
+    invoice.discountEnabled
+      ? ['Descuento aplicado:', `-${currency}${result.totalDiscount.toFixed(2)}`]
+      : ['Descuento (desactivado):', `${currency}0.00`],
+    invoice.taxEnabled
+      ? [`Impuestos (${invoice.taxPercentage}%):`, `${currency}${result.totalTax.toFixed(2)}`]
+      : ['Impuestos (desactivado):', `${currency}0.00`],
+    invoice.tipEnabled
+      ? [`Propina (${invoice.tipPercentage}%):`, `${currency}${result.totalTip.toFixed(2)}`]
+      : ['Propina (desactivado):', `${currency}0.00`],
     ['TOTAL GENERAL:', `${currency}${result.grandTotal.toFixed(2)}`],
   ];
 
@@ -55,9 +61,13 @@ export function generateInvoicePDF(invoice: Invoice, result: CalculationResult) 
   const participantRows = result.shares.map((share) => [
     share.participantName,
     `${currency}${share.subtotal.toFixed(2)}`,
-    share.discountShare > 0 ? `-${currency}${share.discountShare.toFixed(2)}` : `${currency}0.00`,
-    `${currency}${share.taxShare.toFixed(2)}`,
-    `${currency}${share.tipShare.toFixed(2)}`,
+    invoice.discountEnabled
+      ? share.discountShare > 0
+        ? `-${currency}${share.discountShare.toFixed(2)}`
+        : `${currency}0.00`
+      : '—',
+    invoice.taxEnabled ? `${currency}${share.taxShare.toFixed(2)}` : '—',
+    invoice.tipEnabled ? `${currency}${share.tipShare.toFixed(2)}` : '—',
     `${currency}${share.total.toFixed(2)}`,
   ]);
 

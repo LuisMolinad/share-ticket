@@ -35,6 +35,7 @@ src/
 │                             # ItemsManager, SummaryView  (+ su .css junto a cada .tsx)
 ├── domain/
 │   ├── types.ts              # modelo de datos: único source of truth
+│   ├── totals.ts             # calculateTotals(): subtotal/descuento/impuesto/propina global (respeta los flags *Enabled)
 │   ├── strategies/           # ISplitStrategy, EqualSplitStrategy, ItemizedSplitStrategy
 │   └── factories/SplitStrategyFactory.ts
 ├── hooks/useInvoiceCalculator.ts   # estado + mutaciones + cálculo con useMemo
@@ -50,9 +51,9 @@ selecciones transitorias).
 ## Modelo de datos (`src/domain/types.ts`)
 
 `Invoice` (title, date, currency, taxPercentage, tipPercentage,
-discountAmount, splitMode, participants, items), `Participant` (id, name,
-color), `InvoiceItem` (id, name, price, quantity, assignedParticipantIds),
-`SplitMode = 'equal' | 'itemized'`.
+discountAmount, taxEnabled, tipEnabled, discountEnabled, splitMode,
+participants, items), `Participant` (id, name, color), `InvoiceItem` (id, name,
+price, quantity, assignedParticipantIds), `SplitMode = 'equal' | 'itemized'`.
 
 Salida del cálculo: `CalculationResult` con los totales globales y
 `shares: ParticipantShare[]` (subtotal, taxShare, tipShare, discountShare,
@@ -75,15 +76,20 @@ Para añadir un modo nuevo:
 3. Regístrala en el `switch` de `SplitStrategyFactory`.
 4. Agrega el botón/toggle en `Header.tsx` (`onUpdateDetails({ splitMode })`).
 
-Reglas aritméticas existentes (mantenerlas consistentes entre estrategias):
+Reglas aritméticas (viven en `domain/totals.ts` → `calculateTotals()`;
+las estrategias solo reparten los totales):
 
 - `subtotal = Σ price * quantity`.
-- Descuento recortado: `min(max(0, discountAmount), subtotal)`.
-- Impuestos y propina se calculan sobre el subtotal **ya descontado**.
+- Descuento solo aplica si `discountEnabled`; recortado:
+  `min(max(0, discountAmount), subtotal)`.
+- Impuestos solo aplican si `taxEnabled` y propina si `tipEnabled`; se
+  calculan sobre el subtotal **ya descontado**.
 - Sin participantes se devuelven los totales con `shares: []`.
 - En `itemized`, un ítem sin `assignedParticipantIds` se reparte entre todos.
 - Impuestos/propina/descuento se prorratean por el subtotal de cada persona;
   `total` por persona con piso en 0 (`Math.max(0, …)`).
+- Un concepto desactivado no se borra: conserva su valor y simplemente no se
+  aplica (UI lo muestra como "desactivado", el PDF pone `—`/`0.00`).
 
 ## Convenciones de código
 
@@ -110,6 +116,9 @@ Reglas aritméticas existentes (mantenerlas consistentes entre estrategias):
   `.item-card`, `.summary-banner`).
 - Colores solo vía variables (`--primary: #4f46e5`, `--danger`, …); el
   acento indigo es `#4f46e5`.
+- Switches on/off (impuestos, propina, descuento) en `InvoiceDetailsCard`:
+  patrón `.switch` + `.switch-slider` (checkbox oculto) definido en
+  `InvoiceDetailsCard.css`; reutilizarlo si se agregan más toggles.
 - Responsive mobile-first con media queries (`min-width: 640px/768px/1024px`).
 
 ## PDF (`src/utils/pdfGenerator.ts`)

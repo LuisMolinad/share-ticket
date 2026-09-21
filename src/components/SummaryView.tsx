@@ -34,16 +34,22 @@ export const SummaryView: React.FC<SummaryViewProps> = ({ invoice, result, onExp
             <p className="stat-value">{currency}{result.subtotal.toFixed(2)}</p>
           </div>
           <div>
-            <p className="stat-label">Descuento</p>
-            <p className="stat-value">-{currency}{result.totalDiscount.toFixed(2)}</p>
+            <p className="stat-label">Descuento{invoice.discountEnabled ? '' : ' (desactivado)'}</p>
+            <p className="stat-value">
+              {invoice.discountEnabled ? `-${currency}${result.totalDiscount.toFixed(2)}` : '—'}
+            </p>
           </div>
           <div>
-            <p className="stat-label">Impuestos ({invoice.taxPercentage}%)</p>
-            <p className="stat-value">{currency}{result.totalTax.toFixed(2)}</p>
+            <p className="stat-label">Impuestos{invoice.taxEnabled ? ` (${invoice.taxPercentage}%)` : ' (desactivado)'}</p>
+            <p className="stat-value">
+              {invoice.taxEnabled ? `${currency}${result.totalTax.toFixed(2)}` : '—'}
+            </p>
           </div>
           <div>
-            <p className="stat-label">Propina ({invoice.tipPercentage}%)</p>
-            <p className="stat-value">{currency}{result.totalTip.toFixed(2)}</p>
+            <p className="stat-label">Propina{invoice.tipEnabled ? ` (${invoice.tipPercentage}%)` : ' (desactivado)'}</p>
+            <p className="stat-value">
+              {invoice.tipEnabled ? `${currency}${result.totalTip.toFixed(2)}` : '—'}
+            </p>
           </div>
         </div>
       </div>
@@ -90,20 +96,24 @@ export const SummaryView: React.FC<SummaryViewProps> = ({ invoice, result, onExp
                       <span>Subtotal ítems:</span>
                       <span className="summary-subtotal-text">{currency}{share.subtotal.toFixed(2)}</span>
                     </div>
-                    {share.discountShare > 0 && (
+                    {invoice.discountEnabled && share.discountShare > 0 && (
                       <div className="breakdown-row discount">
                         <span>Descuento proporcional:</span>
                         <span className="summary-discount-text">-{currency}{share.discountShare.toFixed(2)}</span>
                       </div>
                     )}
-                    <div className="breakdown-row">
-                      <span>Impuestos ({invoice.taxPercentage}%):</span>
-                      <span className="summary-tax-text">{currency}{share.taxShare.toFixed(2)}</span>
-                    </div>
-                    <div className="breakdown-row">
-                      <span>Propina ({invoice.tipPercentage}%):</span>
-                      <span className="summary-tip-text">{currency}{share.tipShare.toFixed(2)}</span>
-                    </div>
+                    {invoice.taxEnabled && (
+                      <div className="breakdown-row">
+                        <span>Impuestos ({invoice.taxPercentage}%):</span>
+                        <span className="summary-tax-text">{currency}{share.taxShare.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {invoice.tipEnabled && (
+                      <div className="breakdown-row">
+                        <span>Propina ({invoice.tipPercentage}%):</span>
+                        <span className="summary-tip-text">{currency}{share.tipShare.toFixed(2)}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="assigned-items-section">

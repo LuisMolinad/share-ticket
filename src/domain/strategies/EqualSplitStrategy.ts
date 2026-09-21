@@ -1,19 +1,13 @@
 import type { ISplitStrategy } from './ISplitStrategy';
 import type { Invoice, CalculationResult, ParticipantShare } from '../types';
+import { calculateTotals } from '../totals';
 
 export class EqualSplitStrategy implements ISplitStrategy {
   calculate(invoice: Invoice): CalculationResult {
-    const { participants, items, taxPercentage, tipPercentage, discountAmount } = invoice;
+    const { participants, items } = invoice;
 
-    // Subtotal from items (price * quantity)
-    const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
-
-    const totalDiscount = Math.min(Math.max(0, discountAmount), subtotal);
-    const discountedSubtotal = subtotal - totalDiscount;
-
-    const totalTax = (discountedSubtotal * Math.max(0, taxPercentage)) / 100;
-    const totalTip = (discountedSubtotal * Math.max(0, tipPercentage)) / 100;
-    const grandTotal = discountedSubtotal + totalTax + totalTip;
+    // Totales globales compartidos (respeta taxEnabled / tipEnabled / discountEnabled)
+    const { subtotal, totalDiscount, totalTax, totalTip, grandTotal } = calculateTotals(invoice);
 
     if (participants.length === 0) {
       return {

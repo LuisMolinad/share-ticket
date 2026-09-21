@@ -21,6 +21,9 @@ export interface Invoice {
   taxPercentage: number;
   tipPercentage: number;
   discountAmount: number;
+  taxEnabled: boolean;
+  tipEnabled: boolean;
+  discountEnabled: boolean;
   splitMode: SplitMode;
   participants: Participant[];
   items: InvoiceItem[];
