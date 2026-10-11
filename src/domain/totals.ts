@@ -1,4 +1,4 @@
-import type { Invoice } from './types';
+import type { SubInvoice } from '../domain/types';
 
 export interface InvoiceTotals {
   subtotal: number;
@@ -9,12 +9,11 @@ export interface InvoiceTotals {
 }
 
 /**
- * Totales globales de la factura, respetando los flags de habilitación
- * (taxEnabled, tipEnabled, discountEnabled). Compartido por todas las
- * estrategias para mantener la aritmética consistente entre ellas.
+ * Totales para un sub-ticket específico, respetando los flags de habilitación
+ * (taxEnabled, tipEnabled, discountEnabled).
  */
-export function calculateTotals(invoice: Invoice): InvoiceTotals {
-  const { items, taxPercentage, tipPercentage, discountAmount, taxEnabled, tipEnabled, discountEnabled } = invoice;
+export function calculateSubInvoiceTotals(subInvoice: SubInvoice): InvoiceTotals {
+  const { items, taxPercentage, tipPercentage, discountAmount, taxEnabled, tipEnabled, discountEnabled } = subInvoice;
 
   // Subtotal from items (price * quantity)
   const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);

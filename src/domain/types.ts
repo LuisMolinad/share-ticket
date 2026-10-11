@@ -14,10 +14,10 @@ export interface InvoiceItem {
 
 export type SplitMode = 'equal' | 'itemized';
 
-export interface Invoice {
+export interface SubInvoice {
+  id: string;
   title: string;
   date: string;
-  currency: string;
   taxPercentage: number;
   tipPercentage: number;
   discountAmount: number;
@@ -25,8 +25,26 @@ export interface Invoice {
   tipEnabled: boolean;
   discountEnabled: boolean;
   splitMode: SplitMode;
-  participants: Participant[];
   items: InvoiceItem[];
+}
+
+export interface Invoice {
+  title: string; // Group / Session title (e.g. "Viaje a la Montaña" or "Salida con Amigos")
+  date: string;
+  currency: string;
+  participants: Participant[];
+  subInvoices: SubInvoice[];
+}
+
+export interface TicketShareBreakdown {
+  subInvoiceId: string;
+  subInvoiceTitle: string;
+  subtotal: number;
+  taxShare: number;
+  tipShare: number;
+  discountShare: number;
+  total: number;
+  assignedItems: { itemName: string; price: number; quantity: number; share: number }[];
 }
 
 export interface ParticipantShare {
@@ -39,6 +57,7 @@ export interface ParticipantShare {
   discountShare: number;
   total: number;
   assignedItems: { itemName: string; price: number; quantity: number; share: number }[];
+  ticketBreakdowns: TicketShareBreakdown[];
 }
 
 export interface CalculationResult {

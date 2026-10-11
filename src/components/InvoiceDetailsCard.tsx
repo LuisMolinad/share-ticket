@@ -1,150 +1,165 @@
-import React from 'react';
-import type { Invoice } from '../domain/types';
-import { Calendar, FileText } from 'lucide-react';
+import React, { useState } from 'react';
+import type { SubInvoice } from '../domain/types';
+import { Receipt, Percent, Tag, Sliders, Check, Edit2 } from 'lucide-react';
 import './InvoiceDetailsCard.css';
 
 interface InvoiceDetailsCardProps {
-  invoice: Invoice;
-  onUpdate: (updates: Partial<Invoice>) => void;
+  subInvoice: SubInvoice;
+  currency: string;
+  onUpdate: (updates: Partial<SubInvoice>) => void;
 }
 
-export const InvoiceDetailsCard: React.FC<InvoiceDetailsCardProps> = ({ invoice, onUpdate }) => {
+export const InvoiceDetailsCard: React.FC<InvoiceDetailsCardProps> = ({ subInvoice, currency, onUpdate }) => {
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [titleInput, setTitleInput] = useState(subInvoice.title);
+
+  const handleSaveTitle = () => {
+    onUpdate({ title: titleInput.trim() || 'Ticket sin título' });
+    setIsEditingTitle(false);
+  };
+
   return (
     <div className="card">
-      <h2 className="card-title">
-        <FileText />
-        <span>Detalles de la Factura</span>
-      </h2>
+      <div className="invoice-details-header">
+        <div className="invoice-title-area">
+          <Receipt className="invoice-details-icon" size={20} />
+          {isEditingTitle ? (
+            <div className="inline-edit-group">
+              <input
+                type="text"
+                className="form-input"
+                value={titleInput}
+                onChange={(e) => setTitleInput(e.target.value)}
+                autoFocus
+              />
+              <button onClick={handleSaveTitle} className="btn btn-sm btn-primary">
+                <Check size={14} />
+              </button>
+            </div>
+          ) : (
+            <div className="invoice-title-click" onClick={() => setIsEditingTitle(true)}>
+              <h2 className="card-title margin-zero">{subInvoice.title}</h2>
+              <Edit2 size={14} className="edit-icon-hint" />
+            </div>
+          )}
+        </div>
 
-      <div className="form-grid form-grid-6">
-        <div className="form-group col-span-2">
-          <label className="form-label">Concepto / Evento</label>
+        {/* Split Mode Selector */}
+        <div className="split-mode-selector">
+          <button
+            type="button"
+            className={`split-mode-btn ${subInvoice.splitMode === 'equal' ? 'active' : ''}`}
+            onClick={() => onUpdate({ splitMode: 'equal' })}
+          >
+            Equitativo
+          </button>
+          <button
+            type="button"
+            className={`split-mode-btn ${subInvoice.splitMode === 'itemized' ? 'active' : ''}`}
+            onClick={() => onUpdate({ splitMode: 'itemized' })}
+          >
+            Por Ítems / Persona
+          </button>
+        </div>
+      </div>
+
+      <div className="form-grid">
+        {/* Fecha y Título corto */}
+        <div className="form-group">
+          <label className="form-label">Fecha del ticket</label>
           <input
-            type="text"
-            value={invoice.title}
-            onChange={(e) => onUpdate({ title: e.target.value })}
-            placeholder="Ej. Cena de Cumpleaños"
+            type="date"
+            value={subInvoice.date}
+            onChange={(e) => onUpdate({ date: e.target.value })}
             className="form-input"
           />
         </div>
 
+        {/* Impuestos (Tax) */}
         <div className="form-group">
-          <label className="form-label">Fecha</label>
-          <div className="input-with-icon">
-            <span className="input-icon">
-              <Calendar size={16} />
-            </span>
+          <div className="form-label-row">
+            <label className="form-label">
+              <Percent size={14} /> Impuestos (%)
+            </label>
+            <label className="switch" title="Activar / Desactivar impuestos">
+              <input
+                type="checkbox"
+                checked={subInvoice.taxEnabled}
+                onChange={(e) => onUpdate({ taxEnabled: e.target.checked })}
+              />
+              <span className="switch-slider"></span>
+            </label>
+          </div>
+          <div className={`input-with-disabled ${!subInvoice.taxEnabled ? 'disabled' : ''}`}>
             <input
-              type="date"
-              value={invoice.date}
-              onChange={(e) => onUpdate({ date: e.target.value })}
-              className="form-input date-input-with-icon"
+              type="number"
+              min="0"
+              step="0.1"
+              value={subInvoice.taxPercentage}
+              onChange={(e) => onUpdate({ taxPercentage: parseFloat(e.target.value) || 0 })}
+              disabled={!subInvoice.taxEnabled}
+              className="form-input"
+              placeholder="0"
             />
           </div>
         </div>
 
+        {/* Propina (Tip) */}
         <div className="form-group">
-          <label className="form-label">Moneda</label>
-          <select
-            value={invoice.currency}
-            onChange={(e) => onUpdate({ currency: e.target.value })}
-            className="form-select"
-          >
-            <option value="$">$ (USD / Pesos)</option>
-            <option value="€">€ (EUR)</option>
-            <option value="£">£ (GBP)</option>
-            <option value="S/.">S/. (PEN)</option>
-            <option value="$us">$us (BOB)</option>
-            <option value="MXN$ ">MXN$</option>
-            <option value="COL$ ">COL$</option>
-          </select>
-        </div>
-
-        <div className="form-group">
-          <div className="field-head">
-            <label className="form-label" htmlFor="tax-percentage">
-              Impuestos (%)
+          <div className="form-label-row">
+            <label className="form-label">
+              <Sliders size={14} /> Propina (%)
             </label>
-            <label className="switch" title={invoice.taxEnabled ? 'Impuestos activados' : 'Impuestos desactivados'}>
+            <label className="switch" title="Activar / Desactivar propina">
               <input
                 type="checkbox"
-                role="switch"
-                aria-label="Activar o desactivar impuestos"
-                checked={invoice.taxEnabled}
-                onChange={(e) => onUpdate({ taxEnabled: e.target.checked })}
-              />
-              <span className="switch-slider" />
-            </label>
-          </div>
-          <input
-            id="tax-percentage"
-            type="number"
-            min="0"
-            step="0.1"
-            value={invoice.taxPercentage}
-            onChange={(e) => onUpdate({ taxPercentage: parseFloat(e.target.value) || 0 })}
-            disabled={!invoice.taxEnabled}
-            className="form-input"
-          />
-        </div>
-
-        <div className="form-group">
-          <div className="field-head">
-            <label className="form-label" htmlFor="tip-percentage">
-              Propina (%)
-            </label>
-            <label className="switch" title={invoice.tipEnabled ? 'Propina activada' : 'Propina desactivada'}>
-              <input
-                type="checkbox"
-                role="switch"
-                aria-label="Activar o desactivar propina"
-                checked={invoice.tipEnabled}
+                checked={subInvoice.tipEnabled}
                 onChange={(e) => onUpdate({ tipEnabled: e.target.checked })}
               />
-              <span className="switch-slider" />
+              <span className="switch-slider"></span>
             </label>
           </div>
-          <input
-            id="tip-percentage"
-            type="number"
-            min="0"
-            step="0.1"
-            value={invoice.tipPercentage}
-            onChange={(e) => onUpdate({ tipPercentage: parseFloat(e.target.value) || 0 })}
-            disabled={!invoice.tipEnabled}
-            className="form-input"
-          />
+          <div className={`input-with-disabled ${!subInvoice.tipEnabled ? 'disabled' : ''}`}>
+            <input
+              type="number"
+              min="0"
+              step="0.1"
+              value={subInvoice.tipPercentage}
+              onChange={(e) => onUpdate({ tipPercentage: parseFloat(e.target.value) || 0 })}
+              disabled={!subInvoice.tipEnabled}
+              className="form-input"
+              placeholder="0"
+            />
+          </div>
         </div>
 
-        <div className="form-group col-span-2">
-          <div className="field-head">
-            <label className="form-label" htmlFor="discount-amount">
-              Descuento Total ({invoice.currency})
+        {/* Descuento (Discount) */}
+        <div className="form-group">
+          <div className="form-label-row">
+            <label className="form-label">
+              <Tag size={14} /> Descuento ({currency})
             </label>
-            <label
-              className="switch"
-              title={invoice.discountEnabled ? 'Descuento activado' : 'Descuento desactivado'}
-            >
+            <label className="switch" title="Activar / Desactivar descuento">
               <input
                 type="checkbox"
-                role="switch"
-                aria-label="Activar o desactivar descuento"
-                checked={invoice.discountEnabled}
+                checked={subInvoice.discountEnabled}
                 onChange={(e) => onUpdate({ discountEnabled: e.target.checked })}
               />
-              <span className="switch-slider" />
+              <span className="switch-slider"></span>
             </label>
           </div>
-          <input
-            id="discount-amount"
-            type="number"
-            min="0"
-            step="0.1"
-            value={invoice.discountAmount}
-            onChange={(e) => onUpdate({ discountAmount: parseFloat(e.target.value) || 0 })}
-            disabled={!invoice.discountEnabled}
-            className="form-input"
-          />
+          <div className={`input-with-disabled ${!subInvoice.discountEnabled ? 'disabled' : ''}`}>
+            <input
+              type="number"
+              min="0"
+              step="0.5"
+              value={subInvoice.discountAmount}
+              onChange={(e) => onUpdate({ discountAmount: parseFloat(e.target.value) || 0 })}
+              disabled={!subInvoice.discountEnabled}
+              className="form-input"
+              placeholder="0.00"
+            />
+          </div>
         </div>
       </div>
     </div>

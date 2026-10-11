@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import type { Invoice, CalculationResult, InvoiceItem } from '../domain/types';
+import type { Invoice, CalculationResult, InvoiceItem, SubInvoice } from '../domain/types';
 import { SplitStrategyFactory } from '../domain/factories/SplitStrategyFactory';
 
 const DEFAULT_COLORS = [
@@ -15,37 +15,96 @@ const DEFAULT_COLORS = [
 
 export function useInvoiceCalculator() {
   const [invoice, setInvoice] = useState<Invoice>({
-    title: 'Cena de Amigos',
+    title: 'Viaje y Gastos Grupales',
     date: new Date().toISOString().split('T')[0],
     currency: '$',
-    taxPercentage: 10,
-    tipPercentage: 15,
-    discountAmount: 0,
-    taxEnabled: true,
-    tipEnabled: true,
-    discountEnabled: true,
-    splitMode: 'equal',
     participants: [
       { id: '1', name: 'Ana', color: DEFAULT_COLORS[0] },
       { id: '2', name: 'Carlos', color: DEFAULT_COLORS[1] },
       { id: '3', name: 'Sofía', color: DEFAULT_COLORS[2] },
     ],
-    items: [
-      { id: '101', name: 'Entrada compartida', price: 25.0, quantity: 1, assignedParticipantIds: [] },
-      { id: '102', name: 'Plato Principal', price: 45.0, quantity: 2, assignedParticipantIds: [] },
-      { id: '103', name: 'Bebidas', price: 15.0, quantity: 3, assignedParticipantIds: [] },
+    subInvoices: [
+      {
+        id: 'sub_1',
+        title: 'Almuerzo Principal',
+        date: new Date().toISOString().split('T')[0],
+        taxPercentage: 10,
+        tipPercentage: 15,
+        discountAmount: 0,
+        taxEnabled: true,
+        tipEnabled: true,
+        discountEnabled: true,
+        splitMode: 'equal',
+        items: [
+          { id: '101', name: 'Entrada compartida', price: 25.0, quantity: 1, assignedParticipantIds: [] },
+          { id: '102', name: 'Plato Principal', price: 45.0, quantity: 2, assignedParticipantIds: [] },
+          { id: '103', name: 'Bebidas', price: 15.0, quantity: 3, assignedParticipantIds: [] },
+        ],
+      },
     ],
   });
 
-  // Calculate results using Strategy Pattern
+  const [activeSubInvoiceId, setActiveSubInvoiceId] = useState<string>('sub_1');
+
+  // Active subinvoice helper
+  const activeSubInvoice = useMemo(() => {
+    return invoice.subInvoices.find((s) => s.id === activeSubInvoiceId) || invoice.subInvoices[0];
+  }, [invoice.subInvoices, activeSubInvoiceId]);
+
+  // Calculate results using Strategy Pattern across all subInvoices
   const calculationResult: CalculationResult = useMemo(() => {
-    const strategy = SplitStrategyFactory.createStrategy(invoice.splitMode);
+    const strategy = SplitStrategyFactory.createStrategy(activeSubInvoice.splitMode);
     return strategy.calculate(invoice);
-  }, [invoice]);
+  }, [invoice, activeSubInvoice]);
 
   const updateInvoiceDetails = useCallback((updates: Partial<Invoice>) => {
     setInvoice((prev) => ({ ...prev, ...updates }));
   }, []);
+
+  const updateActiveSubInvoiceDetails = useCallback((updates: Partial<SubInvoice>) => {
+    setInvoice((prev) => ({
+      ...prev,
+      subInvoices: prev.subInvoices.map((sub) => (sub.id === activeSubInvoiceId ? { ...sub, ...updates } : sub)),
+    }));
+  }, [activeSubInvoiceId]);
+
+  const addSubInvoice = useCallback((title: string = 'Nuevo Ticket') => {
+    setInvoice((prev) => {
+      const newId = `sub_${Date.now()}`;
+      const newSub: SubInvoice = {
+        id: newId,
+        title: title.trim() || 'Nuevo Ticket',
+        date: new Date().toISOString().split('T')[0],
+        taxPercentage: 10,
+        tipPercentage: 15,
+        discountAmount: 0,
+        taxEnabled: true,
+        tipEnabled: true,
+        discountEnabled: true,
+        splitMode: 'equal',
+        items: [],
+      };
+      setActiveSubInvoiceId(newId);
+      return {
+        ...prev,
+        subInvoices: [...prev.subInvoices, newSub],
+      };
+    });
+  }, []);
+
+  const removeSubInvoice = useCallback((id: string) => {
+    setInvoice((prev) => {
+      if (prev.subInvoices.length <= 1) return prev; // Keep at least one ticket
+      const remaining = prev.subInvoices.filter((s) => s.id !== id);
+      if (activeSubInvoiceId === id) {
+        setActiveSubInvoiceId(remaining[0].id);
+      }
+      return {
+        ...prev,
+        subInvoices: remaining,
+      };
+    });
+  }, [activeSubInvoiceId]);
 
   const addParticipant = useCallback((name: string) => {
     if (!name.trim()) return;
@@ -63,9 +122,12 @@ export function useInvoiceCalculator() {
     setInvoice((prev) => ({
       ...prev,
       participants: prev.participants.filter((p) => p.id !== id),
-      items: prev.items.map((item) => ({
-        ...item,
-        assignedParticipantIds: item.assignedParticipantIds.filter((pId) => pId !== id),
+      subInvoices: prev.subInvoices.map((sub) => ({
+        ...sub,
+        items: sub.items.map((item) => ({
+          ...item,
+          assignedParticipantIds: item.assignedParticipantIds.filter((pId) => pId !== id),
+        })),
       })),
     }));
   }, []);
@@ -81,68 +143,106 @@ export function useInvoiceCalculator() {
     if (!name.trim() || price < 0 || quantity <= 0) return;
     setInvoice((prev) => ({
       ...prev,
-      items: [
-        ...prev.items,
-        {
-          id: Date.now().toString(),
-          name: name.trim(),
-          price,
-          quantity,
-          assignedParticipantIds,
-        },
-      ],
+      subInvoices: prev.subInvoices.map((sub) => {
+        if (sub.id !== activeSubInvoiceId) return sub;
+        return {
+          ...sub,
+          items: [
+            ...sub.items,
+            {
+              id: Date.now().toString(),
+              name: name.trim(),
+              price,
+              quantity,
+              assignedParticipantIds,
+            },
+          ],
+        };
+      }),
     }));
-  }, []);
+  }, [activeSubInvoiceId]);
 
   const removeItem = useCallback((id: string) => {
     setInvoice((prev) => ({
       ...prev,
-      items: prev.items.filter((item) => item.id !== id),
+      subInvoices: prev.subInvoices.map((sub) => {
+        if (sub.id !== activeSubInvoiceId) return sub;
+        return {
+          ...sub,
+          items: sub.items.filter((item) => item.id !== id),
+        };
+      }),
     }));
-  }, []);
+  }, [activeSubInvoiceId]);
 
   const updateItem = useCallback((id: string, updates: Partial<InvoiceItem>) => {
     setInvoice((prev) => ({
       ...prev,
-      items: prev.items.map((item) => (item.id === id ? { ...item, ...updates } : item)),
+      subInvoices: prev.subInvoices.map((sub) => {
+        if (sub.id !== activeSubInvoiceId) return sub;
+        return {
+          ...sub,
+          items: sub.items.map((item) => (item.id === id ? { ...item, ...updates } : item)),
+        };
+      }),
     }));
-  }, []);
+  }, [activeSubInvoiceId]);
 
   const toggleItemAssignment = useCallback((itemId: string, participantId: string) => {
     setInvoice((prev) => ({
       ...prev,
-      items: prev.items.map((item) => {
-        if (item.id !== itemId) return item;
-        const exists = item.assignedParticipantIds.includes(participantId);
-        const assignedParticipantIds = exists
-          ? item.assignedParticipantIds.filter((id) => id !== participantId)
-          : [...item.assignedParticipantIds, participantId];
-        return { ...item, assignedParticipantIds };
+      subInvoices: prev.subInvoices.map((sub) => {
+        if (sub.id !== activeSubInvoiceId) return sub;
+        return {
+          ...sub,
+          items: sub.items.map((item) => {
+            if (item.id !== itemId) return item;
+            const exists = item.assignedParticipantIds.includes(participantId);
+            const assignedParticipantIds = exists
+              ? item.assignedParticipantIds.filter((id) => id !== participantId)
+              : [...item.assignedParticipantIds, participantId];
+            return { ...item, assignedParticipantIds };
+          }),
+        };
       }),
     }));
-  }, []);
+  }, [activeSubInvoiceId]);
 
   const resetInvoice = useCallback(() => {
     setInvoice({
-      title: 'Nueva Factura',
+      title: 'Nuevo Viaje / Grupo',
       date: new Date().toISOString().split('T')[0],
       currency: '$',
-      taxPercentage: 0,
-      tipPercentage: 0,
-      discountAmount: 0,
-      taxEnabled: true,
-      tipEnabled: true,
-      discountEnabled: true,
-      splitMode: 'equal',
       participants: [],
-      items: [],
+      subInvoices: [
+        {
+          id: 'sub_1',
+          title: 'Ticket Principal',
+          date: new Date().toISOString().split('T')[0],
+          taxPercentage: 0,
+          tipPercentage: 0,
+          discountAmount: 0,
+          taxEnabled: true,
+          tipEnabled: true,
+          discountEnabled: true,
+          splitMode: 'equal',
+          items: [],
+        },
+      ],
     });
+    setActiveSubInvoiceId('sub_1');
   }, []);
 
   return {
     invoice,
+    activeSubInvoice,
+    activeSubInvoiceId,
+    setActiveSubInvoiceId,
     calculationResult,
     updateInvoiceDetails,
+    updateActiveSubInvoiceDetails,
+    addSubInvoice,
+    removeSubInvoice,
     addParticipant,
     removeParticipant,
     updateParticipant,

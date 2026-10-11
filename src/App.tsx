@@ -9,8 +9,13 @@ import { generateInvoicePDF } from './utils/pdfGenerator';
 export function App() {
   const {
     invoice,
+    activeSubInvoice,
     calculationResult,
     updateInvoiceDetails,
+    updateActiveSubInvoiceDetails,
+    addSubInvoice,
+    removeSubInvoice,
+    setActiveSubInvoiceId,
     addParticipant,
     removeParticipant,
     updateParticipant,
@@ -28,15 +33,22 @@ export function App() {
     <div className="app-container">
       <Header
         invoice={invoice}
-        onUpdateDetails={updateInvoiceDetails}
+        activeSubInvoice={activeSubInvoice}
+        onUpdateGroupDetails={updateInvoiceDetails}
+        onAddSubInvoice={addSubInvoice}
+        onRemoveSubInvoice={removeSubInvoice}
+        onSelectSubInvoice={setActiveSubInvoiceId}
         onReset={resetInvoice}
         onExportPDF={handleExportPDF}
         participantCount={invoice.participants.length}
-        itemCount={invoice.items.length}
       />
 
       <main className="main-content">
-        <InvoiceDetailsCard invoice={invoice} onUpdate={updateInvoiceDetails} />
+        <InvoiceDetailsCard
+          subInvoice={activeSubInvoice}
+          currency={invoice.currency}
+          onUpdate={updateActiveSubInvoiceDetails}
+        />
 
         <div className="grid-2">
           <ParticipantsManager
@@ -47,9 +59,8 @@ export function App() {
           />
 
           <ItemsManager
-            items={invoice.items}
+            subInvoice={activeSubInvoice}
             participants={invoice.participants}
-            splitMode={invoice.splitMode}
             currency={invoice.currency}
             onAddItem={addItem}
             onRemoveItem={removeItem}
