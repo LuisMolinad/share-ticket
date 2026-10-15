@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { Invoice, SubInvoice } from '../domain/types';
-import { Plus, Trash2, Receipt, FileDown, RotateCcw, DollarSign, Edit2, Check } from 'lucide-react';
+import { Plus, Trash2, Receipt, FileDown, RotateCcw, DollarSign, Edit2, Check, FileSpreadsheet } from 'lucide-react';
 import './Header.css';
 
 interface HeaderProps {
@@ -12,6 +12,7 @@ interface HeaderProps {
   onSelectSubInvoice: (id: string) => void;
   onReset: () => void;
   onExportPDF: () => void;
+  onExportSheets: () => void;
   participantCount: number;
 }
 
@@ -24,6 +25,7 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectSubInvoice,
   onReset,
   onExportPDF,
+  onExportSheets,
   participantCount,
 }) => {
   const [newTicketTitle, setNewTicketTitle] = useState('');
@@ -98,6 +100,11 @@ export const Header: React.FC<HeaderProps> = ({
             <button onClick={onReset} className="btn btn-secondary" title="Reiniciar todo">
               <RotateCcw size={16} />
               <span className="btn-text-responsive">Nuevo</span>
+            </button>
+
+            <button onClick={onExportSheets} className="btn btn-secondary" title="Exportar a Google Sheets / Excel con fórmulas">
+              <FileSpreadsheet size={16} />
+              <span>Sheets</span>
             </button>
 
             <button onClick={onExportPDF} className="btn btn-primary" title="Exportar Reporte PDF">

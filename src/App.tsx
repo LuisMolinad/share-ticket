@@ -5,6 +5,7 @@ import { ParticipantsManager } from './components/ParticipantsManager';
 import { ItemsManager } from './components/ItemsManager';
 import { SummaryView } from './components/SummaryView';
 import { generateInvoicePDF } from './utils/pdfGenerator';
+import { exportToGoogleSheets } from './utils/googleSheetsExporter';
 
 export function App() {
   const {
@@ -29,6 +30,10 @@ export function App() {
     generateInvoicePDF(invoice, calculationResult);
   };
 
+  const handleExportSheets = () => {
+    exportToGoogleSheets(invoice, calculationResult);
+  };
+
   return (
     <div className="app-container">
       <Header
@@ -40,6 +45,7 @@ export function App() {
         onSelectSubInvoice={setActiveSubInvoiceId}
         onReset={resetInvoice}
         onExportPDF={handleExportPDF}
+        onExportSheets={handleExportSheets}
         participantCount={invoice.participants.length}
       />
 
@@ -68,7 +74,7 @@ export function App() {
           />
         </div>
 
-        <SummaryView invoice={invoice} result={calculationResult} onExportPDF={handleExportPDF} />
+        <SummaryView invoice={invoice} result={calculationResult} onExportPDF={handleExportPDF} onExportSheets={handleExportSheets} />
       </main>
 
       <footer className="footer">

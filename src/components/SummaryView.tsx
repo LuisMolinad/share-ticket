@@ -1,15 +1,16 @@
 import React from 'react';
 import type { CalculationResult, Invoice } from '../domain/types';
-import { Calculator, FileDown, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calculator, FileDown, CheckCircle2, ChevronDown, ChevronUp, FileSpreadsheet } from 'lucide-react';
 import './SummaryView.css';
 
 interface SummaryViewProps {
   invoice: Invoice;
   result: CalculationResult;
   onExportPDF: () => void;
+  onExportSheets: () => void;
 }
 
-export const SummaryView: React.FC<SummaryViewProps> = ({ invoice, result, onExportPDF }) => {
+export const SummaryView: React.FC<SummaryViewProps> = ({ invoice, result, onExportPDF, onExportSheets }) => {
   const currency = invoice.currency;
   const [expandedParticipantId, setExpandedParticipantId] = React.useState<string | null>(null);
 
@@ -67,14 +68,26 @@ export const SummaryView: React.FC<SummaryViewProps> = ({ invoice, result, onExp
             <span>Desglose Consolidado por Persona</span>
           </h3>
 
-          <button
-            onClick={onExportPDF}
-            disabled={result.shares.length === 0 || result.subtotal === 0}
-            className="btn btn-primary"
-          >
-            <FileDown size={16} />
-            <span>Descargar Reporte PDF Global</span>
-          </button>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <button
+              onClick={onExportSheets}
+              disabled={result.shares.length === 0 || result.subtotal === 0}
+              className="btn btn-secondary"
+              title="Exportar a Google Sheets / Excel con fórmulas"
+            >
+              <FileSpreadsheet size={16} />
+              <span>Google Sheets (Fórmulas)</span>
+            </button>
+
+            <button
+              onClick={onExportPDF}
+              disabled={result.shares.length === 0 || result.subtotal === 0}
+              className="btn btn-primary"
+            >
+              <FileDown size={16} />
+              <span>Descargar Reporte PDF Global</span>
+            </button>
+          </div>
         </div>
 
         {result.shares.length === 0 ? (
