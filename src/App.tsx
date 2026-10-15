@@ -6,6 +6,7 @@ import { ItemsManager } from './components/ItemsManager';
 import { SummaryView } from './components/SummaryView';
 import { generateInvoicePDF } from './utils/pdfGenerator';
 import { exportToGoogleSheets } from './utils/googleSheetsExporter';
+import { exportInvoiceJSON, importInvoiceJSON } from './utils/jsonPersistence';
 
 export function App() {
   const {
@@ -24,6 +25,7 @@ export function App() {
     removeItem,
     toggleItemAssignment,
     resetInvoice,
+    importInvoice,
   } = useInvoiceCalculator();
 
   const handleExportPDF = () => {
@@ -32,6 +34,23 @@ export function App() {
 
   const handleExportSheets = () => {
     exportToGoogleSheets(invoice, calculationResult);
+  };
+
+  const handleExportJSON = () => {
+    exportInvoiceJSON(invoice);
+  };
+
+  const handleImportJSON = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const imported = await importInvoiceJSON(file);
+      importInvoice(imported);
+      e.target.value = '';
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error al importar el archivo JSON.';
+      alert(message);
+    }
   };
 
   return (
@@ -46,6 +65,8 @@ export function App() {
         onReset={resetInvoice}
         onExportPDF={handleExportPDF}
         onExportSheets={handleExportSheets}
+        onExportJSON={handleExportJSON}
+        onImportJSON={handleImportJSON}
         participantCount={invoice.participants.length}
       />
 

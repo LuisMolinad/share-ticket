@@ -1,6 +1,7 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import type { Invoice, CalculationResult, InvoiceItem, SubInvoice } from '../domain/types';
 import { SplitStrategyFactory } from '../domain/factories/SplitStrategyFactory';
+import { loadInvoiceFromStorage, saveInvoiceToStorage } from '../utils/jsonPersistence';
 
 const DEFAULT_COLORS = [
   '#3b82f6', // blue
@@ -14,37 +15,51 @@ const DEFAULT_COLORS = [
 ];
 
 export function useInvoiceCalculator() {
-  const [invoice, setInvoice] = useState<Invoice>({
-    title: 'Viaje y Gastos Grupales',
-    date: new Date().toISOString().split('T')[0],
-    currency: '$',
-    participants: [
-      { id: '1', name: 'Ana', color: DEFAULT_COLORS[0] },
-      { id: '2', name: 'Carlos', color: DEFAULT_COLORS[1] },
-      { id: '3', name: 'Sofía', color: DEFAULT_COLORS[2] },
-    ],
-    subInvoices: [
-      {
-        id: 'sub_1',
-        title: 'Almuerzo Principal',
-        date: new Date().toISOString().split('T')[0],
-        taxPercentage: 10,
-        tipPercentage: 15,
-        discountAmount: 0,
-        taxEnabled: true,
-        tipEnabled: true,
-        discountEnabled: true,
-        splitMode: 'equal',
-        items: [
-          { id: '101', name: 'Entrada compartida', price: 25.0, quantity: 1, assignedParticipantIds: [] },
-          { id: '102', name: 'Plato Principal', price: 45.0, quantity: 2, assignedParticipantIds: [] },
-          { id: '103', name: 'Bebidas', price: 15.0, quantity: 3, assignedParticipantIds: [] },
-        ],
-      },
-    ],
+  const [invoice, setInvoice] = useState<Invoice>(() => {
+    const loaded = loadInvoiceFromStorage();
+    if (loaded) return loaded;
+    return {
+      title: 'Viaje y Gastos Grupales',
+      date: new Date().toISOString().split('T')[0],
+      currency: '$',
+      participants: [
+        { id: '1', name: 'Ana', color: DEFAULT_COLORS[0] },
+        { id: '2', name: 'Carlos', color: DEFAULT_COLORS[1] },
+        { id: '3', name: 'Sofía', color: DEFAULT_COLORS[2] },
+      ],
+      subInvoices: [
+        {
+          id: 'sub_1',
+          title: 'Almuerzo Principal',
+          date: new Date().toISOString().split('T')[0],
+          taxPercentage: 10,
+          tipPercentage: 15,
+          discountAmount: 0,
+          taxEnabled: true,
+          tipEnabled: true,
+          discountEnabled: true,
+          splitMode: 'equal',
+          items: [
+            { id: '101', name: 'Entrada compartida', price: 25.0, quantity: 1, assignedParticipantIds: [] },
+            { id: '102', name: 'Plato Principal', price: 45.0, quantity: 2, assignedParticipantIds: [] },
+            { id: '103', name: 'Bebidas', price: 15.0, quantity: 3, assignedParticipantIds: [] },
+          ],
+        },
+      ],
+    };
   });
 
-  const [activeSubInvoiceId, setActiveSubInvoiceId] = useState<string>('sub_1');
+  const [activeSubInvoiceId, setActiveSubInvoiceId] = useState<string>(() => {
+    if (invoice.subInvoices && invoice.subInvoices.length > 0) {
+      return invoice.subInvoices[0].id;
+    }
+    return 'sub_1';
+  });
+
+  // Save to localStorage whenever invoice changes
+  useEffect(() => {
+    saveInvoiceToStorage(invoice);
+  }, [invoice]);
 
   // Active subinvoice helper
   const activeSubInvoice = useMemo(() => {
@@ -233,6 +248,13 @@ export function useInvoiceCalculator() {
     setActiveSubInvoiceId('sub_1');
   }, []);
 
+  const importInvoice = useCallback((newInvoice: Invoice) => {
+    setInvoice(newInvoice);
+    if (newInvoice.subInvoices && newInvoice.subInvoices.length > 0) {
+      setActiveSubInvoiceId(newInvoice.subInvoices[0].id);
+    }
+  }, []);
+
   return {
     invoice,
     activeSubInvoice,
@@ -251,5 +273,6 @@ export function useInvoiceCalculator() {
     updateItem,
     toggleItemAssignment,
     resetInvoice,
+    importInvoice,
   };
 }

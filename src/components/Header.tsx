@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import type { Invoice, SubInvoice } from '../domain/types';
-import { Plus, Trash2, Receipt, FileDown, RotateCcw, DollarSign, Edit2, Check, FileSpreadsheet } from 'lucide-react';
+import { Plus, Trash2, Receipt, FileDown, RotateCcw, DollarSign, Edit2, Check, FileSpreadsheet, Download, Upload } from 'lucide-react';
 import './Header.css';
 
 interface HeaderProps {
@@ -13,6 +13,8 @@ interface HeaderProps {
   onReset: () => void;
   onExportPDF: () => void;
   onExportSheets: () => void;
+  onExportJSON: () => void;
+  onImportJSON: (e: React.ChangeEvent<HTMLInputElement>) => void;
   participantCount: number;
 }
 
@@ -26,12 +28,15 @@ export const Header: React.FC<HeaderProps> = ({
   onReset,
   onExportPDF,
   onExportSheets,
+  onExportJSON,
+  onImportJSON,
   participantCount,
 }) => {
   const [newTicketTitle, setNewTicketTitle] = useState('');
   const [isAddingTicket, setIsAddingTicket] = useState(false);
   const [isEditingGroupName, setIsEditingGroupName] = useState(false);
   const [groupNameInput, setGroupNameInput] = useState(invoice.title);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleCreateTicket = (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,6 +107,22 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="btn-text-responsive">Nuevo</span>
             </button>
 
+            <button onClick={onExportJSON} className="btn btn-secondary" title="Guardar sesión (Descargar archivo JSON)">
+              <Download size={16} />
+              <span>Guardar</span>
+            </button>
+
+            <button onClick={() => fileInputRef.current?.click()} className="btn btn-secondary" title="Cargar sesión guardada (Subir archivo JSON)">
+              <Upload size={16} />
+              <span>Cargar</span>
+            </button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={onImportJSON}
+              accept=".json"
+              style={{ display: 'none' }}
+            />
             <button onClick={onExportSheets} className="btn btn-secondary" title="Exportar a Google Sheets / Excel con fórmulas">
               <FileSpreadsheet size={16} />
               <span>Sheets</span>
