@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { Invoice, CalculationResult } from '../domain/types';
+import { formatAmount } from './formatters';
 
 export function generateInvoicePDF(invoice: Invoice, result: CalculationResult) {
   const doc = new jsPDF();
@@ -27,11 +28,11 @@ export function generateInvoicePDF(invoice: Invoice, result: CalculationResult) 
   doc.text('Resumen General Consolidado', 14, 52);
 
   const summaryData = [
-    ['Subtotal general de ítems:', `${currency}${result.subtotal.toFixed(2)}`],
-    ['Descuentos totales:', `-${currency}${result.totalDiscount.toFixed(2)}`],
-    ['Impuestos totales:', `${currency}${result.totalTax.toFixed(2)}`],
-    ['Propinas totales:', `${currency}${result.totalTip.toFixed(2)}`],
-    ['GRAN TOTAL CONSOLIDADO:', `${currency}${result.grandTotal.toFixed(2)}`],
+    ['Subtotal general de ítems:', `${currency}${formatAmount(result.subtotal)}`],
+    ['Descuentos totales:', `-${currency}${formatAmount(result.totalDiscount)}`],
+    ['Impuestos totales:', `${currency}${formatAmount(result.totalTax)}`],
+    ['Propinas totales:', `${currency}${formatAmount(result.totalTip)}`],
+    ['GRAN TOTAL CONSOLIDADO:', `${currency}${formatAmount(result.grandTotal)}`],
   ];
 
   autoTable(doc, {
@@ -54,11 +55,11 @@ export function generateInvoicePDF(invoice: Invoice, result: CalculationResult) 
 
   const participantRows = result.shares.map((share) => [
     share.participantName,
-    `${currency}${share.subtotal.toFixed(2)}`,
-    share.discountShare > 0 ? `-${currency}${share.discountShare.toFixed(2)}` : `${currency}0.00`,
-    `${currency}${share.taxShare.toFixed(2)}`,
-    `${currency}${share.tipShare.toFixed(2)}`,
-    `${currency}${share.total.toFixed(2)}`,
+    `${currency}${formatAmount(share.subtotal)}`,
+    share.discountShare > 0 ? `-${currency}${formatAmount(share.discountShare)}` : `${currency}0.00`,
+    `${currency}${formatAmount(share.taxShare)}`,
+    `${currency}${formatAmount(share.tipShare)}`,
+    `${currency}${formatAmount(share.total)}`,
   ]);
 
   autoTable(doc, {
@@ -99,7 +100,7 @@ export function generateInvoicePDF(invoice: Invoice, result: CalculationResult) 
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(79, 70, 229);
-    doc.text(`${share.participantName} — Total Acumulado: ${currency}${share.total.toFixed(2)}`, 14, currentY);
+    doc.text(`${share.participantName} — Total Acumulado: ${currency}${formatAmount(share.total)}`, 14, currentY);
     currentY += 6;
 
     share.ticketBreakdowns.forEach((tb) => {
@@ -111,14 +112,14 @@ export function generateInvoicePDF(invoice: Invoice, result: CalculationResult) 
       doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(55, 65, 81);
-      doc.text(`• Ticket: ${tb.subInvoiceTitle} (Subtotal: ${currency}${tb.total.toFixed(2)})`, 18, currentY);
+      doc.text(`• Ticket: ${tb.subInvoiceTitle} (Subtotal: ${currency}${formatAmount(tb.total)})`, 18, currentY);
       currentY += 4;
 
       const itemRows = tb.assignedItems.map((item) => [
         item.itemName.replace(/\[.*?\]\s*/, ''),
-        `${item.quantity % 1 === 0 ? item.quantity : item.quantity.toFixed(2)} un.`,
-        `${currency}${item.price.toFixed(2)}`,
-        `${currency}${item.share.toFixed(2)}`,
+        `${item.quantity % 1 === 0 ? item.quantity : formatAmount(item.quantity)} un.`,
+        `${currency}${formatAmount(item.price)}`,
+        `${currency}${formatAmount(item.share)}`,
       ]);
 
       if (itemRows.length > 0) {

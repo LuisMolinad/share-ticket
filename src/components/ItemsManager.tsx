@@ -1,6 +1,7 @@
 import React from 'react';
 import type { SubInvoice, Participant } from '../domain/types';
 import { Plus, Trash2, Check } from 'lucide-react';
+import { formatAmount } from '../utils/formatters';
 import './ItemsManager.css';
 
 interface ItemsManagerProps {
@@ -123,9 +124,9 @@ export const ItemsManager: React.FC<ItemsManagerProps> = ({
                     <div className="item-main-details">
                       <span className="item-name">{item.name}</span>
                       <span className="item-price">
-                        {currency}{totalItemPrice.toFixed(2)}
+                        {currency}{formatAmount(totalItemPrice)}
                         {item.quantity > 1 && (
-                          <span className="item-unit-hint"> ({item.quantity}x {currency}{item.price.toFixed(2)})</span>
+                          <span className="item-unit-hint"> ({item.quantity}x {currency}{formatAmount(item.price)})</span>
                         )}
                       </span>
                     </div>
