@@ -5,12 +5,19 @@ import { ParticipantsManager } from './components/ParticipantsManager';
 import { ItemsManager } from './components/ItemsManager';
 import { SummaryView } from './components/SummaryView';
 import { generateInvoicePDF } from './utils/pdfGenerator';
+import { exportToGoogleSheets } from './utils/googleSheetsExporter';
+import { exportInvoiceJSON, importInvoiceJSON } from './utils/jsonPersistence';
 
 export function App() {
   const {
     invoice,
+    activeSubInvoice,
     calculationResult,
     updateInvoiceDetails,
+    updateActiveSubInvoiceDetails,
+    addSubInvoice,
+    removeSubInvoice,
+    setActiveSubInvoiceId,
     addParticipant,
     removeParticipant,
     updateParticipant,
@@ -18,25 +25,57 @@ export function App() {
     removeItem,
     toggleItemAssignment,
     resetInvoice,
+    importInvoice,
   } = useInvoiceCalculator();
 
   const handleExportPDF = () => {
     generateInvoicePDF(invoice, calculationResult);
   };
 
+  const handleExportSheets = () => {
+    exportToGoogleSheets(invoice, calculationResult);
+  };
+
+  const handleExportJSON = () => {
+    exportInvoiceJSON(invoice);
+  };
+
+  const handleImportJSON = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const imported = await importInvoiceJSON(file);
+      importInvoice(imported);
+      e.target.value = '';
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error al importar el archivo JSON.';
+      alert(message);
+    }
+  };
+
   return (
     <div className="app-container">
       <Header
         invoice={invoice}
-        onUpdateDetails={updateInvoiceDetails}
+        activeSubInvoice={activeSubInvoice}
+        onUpdateGroupDetails={updateInvoiceDetails}
+        onAddSubInvoice={addSubInvoice}
+        onRemoveSubInvoice={removeSubInvoice}
+        onSelectSubInvoice={setActiveSubInvoiceId}
         onReset={resetInvoice}
         onExportPDF={handleExportPDF}
+        onExportSheets={handleExportSheets}
+        onExportJSON={handleExportJSON}
+        onImportJSON={handleImportJSON}
         participantCount={invoice.participants.length}
-        itemCount={invoice.items.length}
       />
 
       <main className="main-content">
-        <InvoiceDetailsCard invoice={invoice} onUpdate={updateInvoiceDetails} />
+        <InvoiceDetailsCard
+          subInvoice={activeSubInvoice}
+          currency={invoice.currency}
+          onUpdate={updateActiveSubInvoiceDetails}
+        />
 
         <div className="grid-2">
           <ParticipantsManager
@@ -47,9 +86,8 @@ export function App() {
           />
 
           <ItemsManager
-            items={invoice.items}
+            subInvoice={activeSubInvoice}
             participants={invoice.participants}
-            splitMode={invoice.splitMode}
             currency={invoice.currency}
             onAddItem={addItem}
             onRemoveItem={removeItem}
@@ -57,7 +95,7 @@ export function App() {
           />
         </div>
 
-        <SummaryView invoice={invoice} result={calculationResult} onExportPDF={handleExportPDF} />
+        <SummaryView invoice={invoice} result={calculationResult} onExportPDF={handleExportPDF} onExportSheets={handleExportSheets} />
       </main>
 
       <footer className="footer">
