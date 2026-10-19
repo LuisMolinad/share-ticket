@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import type { Invoice, CalculationResult, InvoiceItem, SubInvoice } from '../domain/types';
+import type { Invoice, CalculationResult, InvoiceItem, SubInvoice, ParticipantShare } from '../domain/types';
 import { SplitStrategyFactory } from '../domain/factories/SplitStrategyFactory';
 import { loadInvoiceFromStorage, saveInvoiceToStorage } from '../utils/jsonPersistence';
 
@@ -66,11 +66,66 @@ export function useInvoiceCalculator() {
     return invoice.subInvoices.find((s) => s.id === activeSubInvoiceId) || invoice.subInvoices[0];
   }, [invoice.subInvoices, activeSubInvoiceId]);
 
-  // Calculate results using Strategy Pattern across all subInvoices
+  // Calculate results using Strategy Pattern per subInvoice (respecting each subInvoice's splitMode)
   const calculationResult: CalculationResult = useMemo(() => {
-    const strategy = SplitStrategyFactory.createStrategy(activeSubInvoice.splitMode);
-    return strategy.calculate(invoice);
-  }, [invoice, activeSubInvoice]);
+    let totalSubtotal = 0;
+    let totalTaxAll = 0;
+    let totalTipAll = 0;
+    let totalDiscountAll = 0;
+    let grandTotalAll = 0;
+
+    const participantMap: Record<string, ParticipantShare> = {};
+
+    invoice.participants.forEach((p) => {
+      participantMap[p.id] = {
+        participantId: p.id,
+        participantName: p.name,
+        participantColor: p.color,
+        subtotal: 0,
+        taxShare: 0,
+        tipShare: 0,
+        discountShare: 0,
+        total: 0,
+        assignedItems: [],
+        ticketBreakdowns: [],
+      };
+    });
+
+    invoice.subInvoices.forEach((sub) => {
+      const strategy = SplitStrategyFactory.createStrategy(sub.splitMode);
+      const subResult = strategy.calculate({
+        ...invoice,
+        subInvoices: [sub],
+      });
+
+      totalSubtotal += subResult.subtotal;
+      totalTaxAll += subResult.totalTax;
+      totalTipAll += subResult.totalTip;
+      totalDiscountAll += subResult.totalDiscount;
+      grandTotalAll += subResult.grandTotal;
+
+      subResult.shares.forEach((share) => {
+        if (participantMap[share.participantId]) {
+          participantMap[share.participantId].subtotal += share.subtotal;
+          participantMap[share.participantId].taxShare += share.taxShare;
+          participantMap[share.participantId].tipShare += share.tipShare;
+          participantMap[share.participantId].discountShare += share.discountShare;
+          participantMap[share.participantId].total += share.total;
+          participantMap[share.participantId].assignedItems.push(...share.assignedItems);
+          participantMap[share.participantId].ticketBreakdowns.push(...share.ticketBreakdowns);
+        }
+      });
+    });
+
+    return {
+      subtotal: totalSubtotal,
+      totalTax: totalTaxAll,
+      totalTip: totalTipAll,
+      totalDiscount: totalDiscountAll,
+      grandTotal: grandTotalAll,
+      shares: Object.values(participantMap),
+    };
+  }, [invoice]);
 
   const updateInvoiceDetails = useCallback((updates: Partial<Invoice>) => {
     setInvoice((prev) => ({ ...prev, ...updates }));
