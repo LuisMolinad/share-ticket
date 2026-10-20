@@ -73,6 +73,13 @@
   border-radius: var(--radius-sm, 0.75rem);
   border: 1px solid var(--border, #e5e7eb);
   gap: 0.25rem;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .split-mode-selector {
+    width: auto;
+  }
 }
 
 .split-mode-btn {
@@ -86,6 +93,14 @@
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
+  flex: 1;
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .split-mode-btn {
+    flex: unset;
+  }
 }
 
 .split-mode-btn:hover {
