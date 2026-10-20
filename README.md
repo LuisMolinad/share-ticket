@@ -1,32 +1,56 @@
-# React + TypeScript + Vite
+# ShareTicket
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+ShareTicket es una SPA para dividir gastos grupales entre participantes usando múltiples tickets, con reparto equitativo o por ítems, y exportación de reportes.
 
-Currently, two official plugins are available:
+## Funcionalidades principales
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Gestión de grupo y moneda para una sesión de gastos.
+- Múltiples tickets (`subInvoices`) dentro de una misma sesión.
+- Modos de división por ticket:
+  - **Equitativo** (`equal`): divide subtotal/impuestos/propina/descuento entre todos.
+  - **Por ítems** (`itemized`): divide cada ítem por asignación de participantes.
+- Exportación de resultados a:
+  - **PDF** consolidado (`jsPDF` + `jspdf-autotable`).
+  - **Google Sheets / Excel** (`xlsx`).
+  - **JSON** (backup/restauración de la sesión).
+- Persistencia automática de la sesión actual en `localStorage`.
 
-## React Compiler
+## Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React 19 + TypeScript
+- Vite 8
+- CSS puro
+- `pnpm` como gestor de paquetes
 
-## Expanding the Oxlint configuration
+## Requisitos
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+- Node.js **>= 22**
+- `pnpm`
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+## Scripts
+
+```bash
+pnpm install
+pnpm dev      # inicia Vite en desarrollo
+pnpm lint     # ejecuta oxlint
+pnpm build    # typecheck (tsc -b) + build de Vite en dist/
+pnpm preview  # sirve la build local
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Desarrollo
+
+El estado de negocio se centraliza en `useInvoiceCalculator` (`src/hooks/useInvoiceCalculator.ts`), que:
+
+- administra participantes, tickets e ítems,
+- calcula el consolidado usando `SplitStrategyFactory`,
+- guarda/carga la sesión con `jsonPersistence`.
+
+## Deploy
+
+El workflow de GitHub Pages (`.github/workflows/deploy.yml`) publica al hacer push a `main`/`master` usando:
+
+1. `pnpm install --frozen-lockfile`
+2. `pnpm build`
+3. despliegue de `dist/`
+
+El `base` de Vite está fijado en `/share-ticket/` en `vite.config.ts` para compatibilidad con GitHub Pages.

@@ -50,17 +50,19 @@ selecciones transitorias).
 
 ## Modelo de datos (`src/domain/types.ts`)
 
-`Invoice` (title, date, currency, taxPercentage, tipPercentage,
-discountAmount, taxEnabled, tipEnabled, discountEnabled, splitMode,
-participants, items), `Participant` (id, name, color), `InvoiceItem` (id, name,
-price, quantity, assignedParticipantIds), `SplitMode = 'equal' | 'itemized'`.
+`Invoice` (title, date, currency, participants, subInvoices),
+`SubInvoice` (id, title, date, taxPercentage, tipPercentage, discountAmount,
+taxEnabled, tipEnabled, discountEnabled, splitMode, items),
+`Participant` (id, name, color), `InvoiceItem` (id, name, price, quantity,
+assignedParticipantIds), `SplitMode = 'equal' | 'itemized'`.
 
 Salida del cálculo: `CalculationResult` con los totales globales y
 `shares: ParticipantShare[]` (subtotal, taxShare, tipShare, discountShare,
-total, assignedItems por persona).
+total, assignedItems por persona y `ticketBreakdowns` por sub-ticket).
 
 Al cambiar el modelo, actualiza en el mismo cambio: las estrategias, el hook,
-`SummaryView`, `pdfGenerator.ts` y `InvoiceDetailsCard` si aplica.
+`SummaryView`, `pdfGenerator.ts`, `googleSheetsExporter.ts` y persistencia JSON
+(`jsonPersistence.ts`) si aplica.
 
 ## Patrón de estrategias (divisiones)
 
@@ -74,17 +76,19 @@ Para añadir un modo nuevo:
 2. Crea `domain/strategies/<Name>SplitStrategy.ts` implementando
    `ISplitStrategy` (clase con `export class`).
 3. Regístrala en el `switch` de `SplitStrategyFactory`.
-4. Agrega el botón/toggle en `Header.tsx` (`onUpdateDetails({ splitMode })`).
+4. Agrega el botón/toggle en `InvoiceDetailsCard.tsx`
+   (`onUpdate({ splitMode: ... })`).
 
-Reglas aritméticas (viven en `domain/totals.ts` → `calculateTotals()`;
-las estrategias solo reparten los totales):
+Reglas aritméticas (viven en `domain/totals.ts` →
+`calculateSubInvoiceTotals()`; las estrategias solo reparten los totales):
 
-- `subtotal = Σ price * quantity`.
+- `subtotal = Σ price * quantity` por sub-ticket.
 - Descuento solo aplica si `discountEnabled`; recortado:
   `min(max(0, discountAmount), subtotal)`.
 - Impuestos solo aplican si `taxEnabled` y propina si `tipEnabled`; se
   calculan sobre el subtotal **ya descontado**.
-- Sin participantes se devuelven los totales con `shares: []`.
+- Sin participantes, las estrategias devuelven los totales del ticket y no
+  generan `shares`.
 - En `itemized`, un ítem sin `assignedParticipantIds` se reparte entre todos.
 - Impuestos/propina/descuento se prorratean por el subtotal de cada persona;
   `total` por persona con piso en 0 (`Math.max(0, …)`).
@@ -144,4 +148,3 @@ ajustar también el deploy. El build debe pasar con lockfile congelado
 
 - `src/App.css` y `src/assets/` (hero.png, react.svg, vite.svg) son restos de
   la plantilla Vite: nada los referencia en el JSX actual.
-- `README.md` sigue siendo el de la plantilla React+Vite.
