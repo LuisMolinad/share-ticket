@@ -18,7 +18,7 @@ export function exportToGoogleSheets(invoice: Invoice, result: CalculationResult
     ['Descuentos Totales', result.totalDiscount],
     ['Impuestos Totales', result.totalTax],
     ['Propinas Totales', result.totalTip],
-    ['GRAN TOTAL CONSOLIDADO', { t: 'n', v: result.grandTotal, f: 'B9-B10+B11+B12' }],
+    ['GRAN TOTAL CONSOLIDADO', { t: 'f', v: result.grandTotal, f: 'B9-B10+B11+B12' }],
   ];
 
   const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
@@ -30,30 +30,30 @@ export function exportToGoogleSheets(invoice: Invoice, result: CalculationResult
     participantHeader,
   ];
 
-  result.shares.forEach((share, index) => {
-    const rowIdx = index + 2; // 1-based index, header is row 1
-    participantRows.push([
-      share.participantName,
-      share.subtotal,
-      share.discountShare,
-      share.taxShare,
-      share.tipShare,
-      { t: 'n', v: share.total, f: `B${rowIdx}-C${rowIdx}+D${rowIdx}+E${rowIdx}` },
-    ]);
-  });
+    result.shares.forEach((share, index) => {
+      const rowIdx = index + 2; // 1-based index, header is row 1
+      participantRows.push([
+        share.participantName,
+        share.subtotal,
+        share.discountShare,
+        share.taxShare,
+        share.tipShare,
+        { t: 'f', v: share.total, f: `B${rowIdx}-C${rowIdx}+D${rowIdx}+E${rowIdx}` },
+      ]);
+    });
 
-  if (result.shares.length > 0) {
-    const startRow = 2;
-    const endRow = result.shares.length + 1;
-    participantRows.push([
-      'TOTAL',
-      { t: 'n', v: result.subtotal, f: `SUM(B${startRow}:B${endRow})` },
-      { t: 'n', v: result.totalDiscount, f: `SUM(C${startRow}:C${endRow})` },
-      { t: 'n', v: result.totalTax, f: `SUM(D${startRow}:D${endRow})` },
-      { t: 'n', v: result.totalTip, f: `SUM(E${startRow}:E${endRow})` },
-      { t: 'n', v: result.grandTotal, f: `SUM(F${startRow}:F${endRow})` },
-    ]);
-  }
+    if (result.shares.length > 0) {
+      const startRow = 2;
+      const endRow = result.shares.length + 1;
+      participantRows.push([
+        'TOTAL',
+        { t: 'f', v: result.subtotal, f: `SUM(B${startRow}:B${endRow})` },
+        { t: 'f', v: result.totalDiscount, f: `SUM(C${startRow}:C${endRow})` },
+        { t: 'f', v: result.totalTax, f: `SUM(D${startRow}:D${endRow})` },
+        { t: 'f', v: result.totalTip, f: `SUM(E${startRow}:E${endRow})` },
+        { t: 'f', v: result.grandTotal, f: `SUM(F${startRow}:F${endRow})` },
+      ]);
+    }
 
   const wsParticipants = XLSX.utils.aoa_to_sheet(participantRows);
   XLSX.utils.book_append_sheet(wb, wsParticipants, 'Desglose por Persona');
