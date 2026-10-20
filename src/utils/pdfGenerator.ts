@@ -115,14 +115,48 @@ export function generateInvoicePDF(invoice: Invoice, result: CalculationResult) 
       doc.text(`• Ticket: ${tb.subInvoiceTitle} (Subtotal: ${currency}${formatAmount(tb.total)})`, 18, currentY);
       currentY += 4;
 
-      const itemRows = tb.assignedItems.map((item) => [
-        item.itemName.replace(/\[.*?\]\s*/, ''),
-        `${item.quantity % 1 === 0 ? item.quantity : formatAmount(item.quantity)} un.`,
-        `${currency}${formatAmount(item.price)}`,
-        `${currency}${formatAmount(item.share)}`,
-      ]);
+      if (tb.assignedItems.length > 0) {
+        const itemRows = tb.assignedItems.map((item) => [
+          item.itemName.replace(/\[.*?\]\s*/, ''),
+          `${item.quantity % 1 === 0 ? item.quantity : formatAmount(item.quantity)} un.`,
+          `${currency}${formatAmount(item.price)}`,
+          `${currency}${formatAmount(item.share)}`,
+        ]);
 
-      if (itemRows.length > 0) {
+        if (tb.discountShare > 0) {
+          itemRows.push([
+            'Descuento proporcional',
+            '',
+            '',
+            `-${currency}${formatAmount(tb.discountShare)}`,
+          ]);
+        }
+        if (tb.taxShare > 0) {
+          itemRows.push([
+            'Impuestos',
+            '',
+            '',
+            `${currency}${formatAmount(tb.taxShare)}`,
+          ]);
+        }
+        if (tb.tipShare > 0) {
+          itemRows.push([
+            'Propina',
+            '',
+            '',
+            `${currency}${formatAmount(tb.tipShare)}`,
+          ]);
+        }
+        itemRows.push([
+          'TOTAL TICKET',
+          '',
+          '',
+          `${currency}${formatAmount(tb.total)}`,
+        ]);
+
+        const itemCount = tb.assignedItems.length;
+        const totalRows = itemRows.length;
+
         autoTable(doc, {
           startY: currentY,
           head: [['Ítem', 'Cant.', 'Precio Unit.', 'Subtotal']],
@@ -131,6 +165,14 @@ export function generateInvoicePDF(invoice: Invoice, result: CalculationResult) 
           headStyles: { fillColor: [156, 163, 175], textColor: [255, 255, 255] },
           styles: { fontSize: 8.5, cellPadding: 2 },
           margin: { left: 18 },
+          didParseCell: (data) => {
+            if (data.row.index >= itemCount) {
+              data.cell.styles.fontStyle = 'bold';
+              if (data.row.index === totalRows - 1) {
+                data.cell.styles.textColor = [79, 70, 229];
+              }
+            }
+          },
         });
         currentY = (doc as any).lastAutoTable.finalY + 8;
       } else {

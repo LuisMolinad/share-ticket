@@ -11,6 +11,13 @@
   max-width: 1280px;
   margin: 0 auto;
   padding: 1rem 1.5rem;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .header-inner {
+    padding: 0.75rem 1rem;
+  }
 }
 
 .header-top-row {
@@ -206,17 +213,30 @@
 @media (max-width: 768px) {
   .header-top-row {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+  }
+  .brand-section {
+    justify-content: space-between;
+    width: 100%;
   }
   .header-actions {
     width: 100%;
-    justify-content: space-between;
+    flex-wrap: wrap;
+    justify-content: flex-start;
   }
   .tickets-tab-bar {
     flex-direction: column;
     align-items: stretch;
+    gap: 0.75rem;
+  }
+  .tickets-tabs-scroll {
+    width: 100%;
+  }
+  .add-ticket-btn, .add-ticket-form {
+    width: 100%;
   }
   .add-ticket-input {
-    width: 100%;
+    flex: 1;
+    width: auto;
   }
 }
